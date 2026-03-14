@@ -1,0 +1,839 @@
+const {useState,useRef,useEffect,useCallback}=React;
+
+/* ─── 상수 ─── */
+const uid=()=>"x"+Math.random().toString(36).slice(2,7);
+const TH=["#6366F1","#22C55E","#F59E0B","#EF4444","#8B5CF6"];
+const MO=["😊","🥰","😋","🤩","😌"];
+const GR=[
+  ["#667eea","#764ba2"],["#f093fb","#f5576c"],["#4facfe","#00f2fe"],
+  ["#43e97b","#38f9d7"],["#fa709a","#fee140"],["#a18cd1","#fbc2eb"],
+  ["#fccb90","#d57eeb"],["#e0c3fc","#8ec5fc"],["#f5576c","#ff6a88"]
+];
+
+/* ─── 초기 데이터 ─── */
+const PPL=[
+  {id:"u1",name:"서울숲러버",handle:"@seongsu_lover",emoji:"🧑‍🎨",bio:"성수동 카페 전문 크리에이터 ☕",type:"creator",maps:12,followers:1240,following:89,verified:true},
+  {id:"u2",name:"제주탐험대",handle:"@jeju_explore",emoji:"🏝️",bio:"제주도 구석구석 탐험 기록",type:"creator",maps:8,followers:3200,following:156,verified:true},
+  {id:"u3",name:"김민지",handle:"@minji_food",emoji:"👩",bio:"맛집 투어가 취미!",type:"friend",maps:3,followers:45,following:120,verified:false},
+  {id:"u4",name:"부여군",handle:"@buyeo_gun",emoji:"🏯",bio:"백제의 숨결이 살아있는 부여군 공식",type:"org",maps:6,followers:2800,following:35,verified:true},
+  {id:"u5",name:"공주시",handle:"@gongju_city",emoji:"👑",bio:"공주시 관광·문화 공식 계정",type:"org",maps:8,followers:3400,following:28,verified:true},
+  {id:"u6",name:"올드서울",handle:"@oldseoul",emoji:"📸",bio:"을지로·종로 레트로 감성",type:"creator",maps:15,followers:5600,following:201,verified:true},
+  {id:"u7",name:"박서연",handle:"@hiking_yeon",emoji:"👩‍🦰",bio:"등산·트레킹 지도 제작",type:"friend",maps:6,followers:180,following:95,verified:false},
+  {id:"u8",name:"천안문화재단",handle:"@ca_culture",emoji:"🎭",bio:"천안 문화예술 진흥 공식 계정",type:"org",maps:7,followers:1900,following:45,verified:true},
+  {id:"u9",name:"카페투어러",handle:"@cafe_tourer",emoji:"☕",bio:"전국 감성카페 리뷰어",type:"creator",maps:20,followers:8900,following:312,verified:true},
+  {id:"u10",name:"이준호",handle:"@junho_dev",emoji:"👨‍💻",bio:"개발자의 작업 카페 지도",type:"friend",maps:2,followers:67,following:88,verified:false},
+];
+const IM=[
+  {id:"m1",title:"성수동 탐험",desc:"성수 일대 감성 장소들",theme:"#6366F1",own:true},
+  {id:"m2",title:"제주 여행",desc:"제주도 맛집·뷰포인트",theme:"#22C55E",own:true},
+  {id:"m3",title:"서울 야경 스팟",desc:"서울에서 밤이 예쁜 곳",theme:"#8B5CF6",own:false,from:"@oldseoul"},
+  {id:"m4",title:"혼밥 맛집 12곳",desc:"solo_foodie님의 지도",theme:"#EF4444",own:false,from:"@solo_foodie"}
+];
+const IF=[
+  {id:"f1",mid:"m1",ty:"pin",tl:"블루보틀 성수",em:"☕",hl:true,lng:127.056,lat:37.544,tags:["커피"],logs:[{id:"l1",d:"2026-03-14",n:"오트밀크 라떼 최고!",m:"😋"}]},
+  {id:"f2",mid:"m1",ty:"pin",tl:"서울숲",em:"🌳",hl:false,lng:127.038,lat:37.544,tags:["산책"],logs:[]},
+  {id:"f3",mid:"m1",ty:"pin",tl:"대림창고",em:"🏭",hl:false,lng:127.058,lat:37.543,tags:["카페"],logs:[]},
+  {id:"f4",mid:"m1",ty:"line",tl:"성수→뚝섬",em:"🚶",hl:false,pts:[[127.044,37.543],[127.048,37.54],[127.052,37.536]],tags:[],logs:[]},
+  {id:"f5",mid:"m2",ty:"pin",tl:"협재해변",em:"🏖️",hl:true,lng:126.239,lat:33.394,tags:["바다"],logs:[{id:"l5",d:"2026-02-20",n:"에메랄드빛 바다!",m:"🤩"}]},
+  {id:"f6",mid:"m2",ty:"pin",tl:"흑돼지거리",em:"🍽️",hl:false,lng:126.531,lat:33.51,tags:["맛집"],logs:[]},
+  {id:"f7",mid:"m3",ty:"pin",tl:"남산타워",em:"🌙",hl:true,lng:126.988,lat:37.551,tags:["야경"],logs:[]},
+  {id:"f8",mid:"m3",ty:"pin",tl:"반포대교",em:"🌉",hl:false,lng:126.995,lat:37.510,tags:["야경"],logs:[]},
+  {id:"f9",mid:"m4",ty:"pin",tl:"혼밥식당 을지로점",em:"🍜",hl:true,lng:126.992,lat:37.566,tags:["맛집"],logs:[]},
+  {id:"f10",mid:"m4",ty:"pin",tl:"1인 샤브샤브",em:"🍲",hl:false,lng:126.985,lat:37.570,tags:["맛집"],logs:[]},
+];
+const IS=[
+  {id:"s1",mapId:"m1",date:"2026-03-12",likes:24,saves:8,caption:"성수동 카페 투어 완료! ☕"},
+  {id:"s2",mapId:"m2",date:"2026-02-25",likes:67,saves:19,caption:"제주도 3박4일 코스 🏖️"}
+];
+
+/* ─── 스타일 상수 ─── */
+const B  ={border:"none",padding:"10px 14px",borderRadius:12,fontSize:12,fontWeight:800,cursor:"pointer",background:"#6366F1",color:"#fff"};
+const BO ={border:"1px solid #E5E7EB",padding:"10px 14px",borderRadius:12,fontSize:12,fontWeight:800,cursor:"pointer",background:"#fff",color:"#6B7280"};
+const BD ={border:"1px solid #FECACA",padding:"10px 14px",borderRadius:12,fontSize:12,fontWeight:800,cursor:"pointer",background:"#FEF2F2",color:"#EF4444"};
+const INP={width:"100%",borderRadius:12,border:"1px solid #E5E7EB",padding:"10px 12px",fontSize:13,fontWeight:700,outline:"none",boxSizing:"border-box"};
+const SHT={position:"fixed",bottom:0,left:0,right:0,maxWidth:430,margin:"0 auto",background:"#fff",borderRadius:"20px 20px 0 0",boxShadow:"0 -12px 30px rgba(0,0,0,.15)",maxHeight:"82vh",overflowY:"auto",padding:"12px 16px 24px",zIndex:9999};
+
+/* ══════════════════════════════
+   MapView
+══════════════════════════════ */
+function MapView({feats,theme,drawMode,onMapClick,onPinClick,draft,onToast}){
+  const containerRef  = useRef(null);
+  const mapRef        = useRef(null);
+  const featLayerRef  = useRef(null);
+  const draftLayerRef = useRef(null);
+  const locMarkerRef  = useRef(null);
+  const initialFit    = useRef(false);
+  const [locBusy,setLocBusy]=useState(false);
+
+  const dmRef    = useRef(drawMode);
+  const clickRef = useRef(onMapClick);
+  const pinRef   = useRef(onPinClick);
+  useEffect(()=>{dmRef.current=drawMode;},[drawMode]);
+  useEffect(()=>{clickRef.current=onMapClick;},[onMapClick]);
+  useEffect(()=>{pinRef.current=onPinClick;},[onPinClick]);
+
+  /* 초기화 */
+  useEffect(()=>{
+    const el=containerRef.current;
+    if(!el||mapRef.current) return;
+    const L=window.L;
+    const map=L.map(el,{zoomControl:false,attributionControl:false})
+               .setView([37.544,127.048],14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+    L.control.zoom({position:'bottomright'}).addTo(map);
+    featLayerRef.current  = L.layerGroup().addTo(map);
+    draftLayerRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    map.on('click',e=>{
+      if(dmRef.current) clickRef.current({lng:e.latlng.lng,lat:e.latlng.lat});
+    });
+    const fix=()=>map.invalidateSize();
+    setTimeout(fix,0);setTimeout(fix,150);setTimeout(fix,500);
+    return()=>{map.remove();mapRef.current=null;featLayerRef.current=null;draftLayerRef.current=null;};
+  },[]);
+
+  /* 피처 렌더 */
+  useEffect(()=>{
+    const lg=featLayerRef.current,map=mapRef.current;
+    if(!lg||!map) return;
+    const L=window.L;
+    lg.clearLayers();
+    const bounds=[];
+    feats.forEach(f=>{
+      if(f.ty==="pin"){
+        const ll=[f.lat,f.lng];
+        bounds.push(ll);
+        const ic=L.divIcon({
+          html:`<div style="width:34px;height:34px;border-radius:17px;background:${f.hl?theme:"#fff"};border:2.5px solid ${theme};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer">${f.em}</div>`,
+          className:"",iconSize:[34,34],iconAnchor:[17,17]
+        });
+        L.marker(ll,{icon:ic}).addTo(lg).on('click',e=>{L.DomEvent.stopPropagation(e);pinRef.current(f);});
+      }
+      if(f.ty==="line"&&f.pts){
+        const lls=f.pts.map(p=>[p[1],p[0]]);
+        lls.forEach(l=>bounds.push(l));
+        L.polyline(lls,{color:theme,weight:4,opacity:.85}).addTo(lg).on('click',e=>{L.DomEvent.stopPropagation(e);pinRef.current(f);});
+        if(lls.length){
+          const ic2=L.divIcon({html:`<div style="width:24px;height:24px;border-radius:12px;background:${theme};display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.2)">${f.em}</div>`,className:"",iconSize:[24,24],iconAnchor:[12,12]});
+          L.marker(lls[0],{icon:ic2}).addTo(lg).on('click',e=>{L.DomEvent.stopPropagation(e);pinRef.current(f);});
+        }
+      }
+      if(f.ty==="area"&&f.pts){
+        const lls=f.pts.map(p=>[p[1],p[0]]);
+        lls.forEach(l=>bounds.push(l));
+        const pg=L.polygon(lls,{color:theme,weight:2,fillColor:theme,fillOpacity:.18}).addTo(lg);
+        pg.on('click',e=>{L.DomEvent.stopPropagation(e);pinRef.current(f);});
+        const center=pg.getBounds().getCenter();
+        const ic3=L.divIcon({html:`<div style="width:28px;height:28px;border-radius:14px;background:${theme};display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.2)">${f.em}</div>`,className:"",iconSize:[28,28],iconAnchor:[14,14]});
+        L.marker([center.lat,center.lng],{icon:ic3}).addTo(lg).on('click',e=>{L.DomEvent.stopPropagation(e);pinRef.current(f);});
+      }
+    });
+    if(!initialFit.current&&bounds.length){
+      try{map.fitBounds(bounds,{padding:[48,48],maxZoom:16,animate:false});}catch(e){}
+      initialFit.current=true;
+    }
+  },[feats,theme]);
+
+  /* 드래프트 렌더 */
+  useEffect(()=>{
+    const dl=draftLayerRef.current;
+    if(!dl) return;
+    const L=window.L;
+    dl.clearLayers();
+    if(!draft||!draft.length) return;
+    draft.forEach((p,i)=>{
+      const ic=L.divIcon({html:`<div style="width:20px;height:20px;border-radius:10px;background:${theme};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,.3)">${i+1}</div>`,className:"",iconSize:[20,20],iconAnchor:[10,10]});
+      L.marker([p[1],p[0]],{icon:ic}).addTo(dl);
+    });
+    if(draft.length>=2)
+      L.polyline(draft.map(p=>[p[1],p[0]]),{color:theme,weight:3,dashArray:"8 5",opacity:.7}).addTo(dl);
+    if(drawMode==="area"&&draft.length>=3)
+      L.polygon(draft.map(p=>[p[1],p[0]]),{color:theme,weight:2,fillColor:theme,fillOpacity:.12,dashArray:"6 4"}).addTo(dl);
+  },[draft,theme,drawMode]);
+
+  /* 커서 */
+  useEffect(()=>{
+    const el=containerRef.current;
+    if(el) el.style.cursor=drawMode?"crosshair":"grab";
+    if(mapRef.current) mapRef.current.invalidateSize();
+  },[drawMode]);
+
+  /* 내 위치 */
+  const handleLocate=()=>{
+    if(!navigator.geolocation){onToast("위치 권한을 허용해주세요");return;}
+    setLocBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        const {latitude:lat,longitude:lng}=pos.coords;
+        const map=mapRef.current,L=window.L;
+        if(!map||!L){setLocBusy(false);return;}
+        if(locMarkerRef.current){locMarkerRef.current.remove();locMarkerRef.current=null;}
+        const ic=L.divIcon({
+          html:`<div style="width:18px;height:18px;border-radius:50%;background:#3B82F6;border:3px solid #fff;box-shadow:0 0 0 4px rgba(59,130,246,.3)"></div>`,
+          className:"",iconSize:[18,18],iconAnchor:[9,9]
+        });
+        locMarkerRef.current=L.marker([lat,lng],{icon:ic,zIndexOffset:1000})
+          .addTo(map).bindPopup("📍 현재 내 위치",{closeButton:false,offset:[0,-6]}).openPopup();
+        map.flyTo([lat,lng],16,{animate:true,duration:1.2});
+        setLocBusy(false);
+        onToast("📍 내 위치로 이동했어요");
+      },
+      err=>{
+        setLocBusy(false);
+        onToast(err.code===1?"위치 권한을 허용해주세요":"위치를 가져올 수 없어요");
+      },
+      {enableHighAccuracy:true,timeout:8000}
+    );
+  };
+
+  return(
+    <div style={{width:"100%",height:"100%",position:"relative"}}>
+      <div ref={containerRef} style={{width:"100%",height:"100%"}}/>
+      <button onClick={handleLocate}
+        style={{position:"absolute",top:10,right:10,zIndex:500,width:48,borderRadius:12,border:`2px solid ${locBusy?"#3B82F6":"#E5E7EB"}`,background:locBusy?"#EFF6FF":"rgba(255,255,255,.96)",cursor:"pointer",fontSize:18,display:"flex",flexDirection:"column",alignItems:"center",padding:"7px 4px",gap:1,boxShadow:"0 2px 6px rgba(0,0,0,.1)"}}>
+        {locBusy?"⏳":"🎯"}
+        <span style={{fontSize:8,fontWeight:800,color:locBusy?"#3B82F6":"#6B7280"}}>내위치</span>
+      </button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════
+   MapThumb
+══════════════════════════════ */
+function MapThumb({map,feats,size,idx}){
+  const g=GR[(idx||0)%GR.length];
+  const pins=feats.filter(f=>f.ty==="pin");
+  const big=typeof size==="number"&&size>120;
+  return(
+    <div style={{width:size,height:size,borderRadius:4,background:`linear-gradient(135deg,${g[0]},${g[1]})`,position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-15,right:-15,width:60,height:60,borderRadius:"50%",background:"rgba(255,255,255,.12)"}}/>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"center",flexWrap:"wrap",gap:2,padding:8,height:"calc(100% - 28px)"}}>
+        {pins.slice(0,4).map((f,i)=>(
+          <span key={i} style={{fontSize:big?28:18,filter:"drop-shadow(0 2px 4px rgba(0,0,0,.2))",transform:`rotate(${(i-1.5)*8}deg)`}}>{f.em}</span>
+        ))}
+      </div>
+      <div style={{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,.35)",padding:"4px 7px"}}>
+        <div style={{fontSize:big?11:8,fontWeight:800,color:"#fff",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{map.title}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════
+   App
+══════════════════════════════ */
+function App(){
+  const[maps,setMaps]=useState(IM);
+  const[feats,setFeats]=useState(IF);
+  const[shared,setShared]=useState(IS);
+  const[tab,setTab]=useState("home");
+  const[oMap,setOMap]=useState(null);
+  const[sheet,setSheet]=useState(null);
+  const[sel,setSel]=useState(null);
+  const[dm,setDm]=useState(null);
+  const[draft,setDraft]=useState([]);
+  const[toast,setToast]=useState("");
+  const[fT,setFT]=useState("");
+  const[fTg,setFTg]=useState("");
+  const[fH,setFH]=useState(false);
+  const[ln,setLn]=useState("");
+  const[lm,setLm]=useState("");
+  const[nT,setNT]=useState("");
+  const[nD,setND]=useState("");
+  const[nTh,setNTh]=useState(TH[0]);
+  const[renId,setRenId]=useState(null);
+  const[sq,setSq]=useState("");
+  const[profView,setProfView]=useState(null);
+  const[pubCap,setPubCap]=useState("");
+  const[searchQ,setSearchQ]=useState("");
+  const[sFilter,setSFilter]=useState("all");
+  const[followed,setFollowed]=useState(["u1","u5"]);
+  const[viewUser,setViewUser]=useState(null);
+  const[listMap,setListMap]=useState("all");
+
+  const tt=msg=>{setToast(msg);setTimeout(()=>setToast(""),2200);};
+
+  const am  = oMap?maps.find(m=>m.id===oMap):null;
+  const mf  = oMap?feats.filter(f=>f.mid===oMap):[];
+  const sf  = sel ?feats.find(f=>f.id===sel) :null;
+
+  const openDet=f=>{
+    setSel(f.id);setSheet("det");
+    setFT(f.tl);setFTg((f.tags||[]).join(", "));setFH(!!f.hl);setLn("");setLm("");
+  };
+  const saveDet=()=>{
+    setFeats(p=>p.map(f=>f.id===sel?{...f,tl:fT||f.tl,tags:fTg.split(",").map(x=>x.trim()).filter(Boolean),hl:fH}:f));
+    tt("저장 ✅");
+  };
+  const addLog=()=>{
+    if(!ln.trim()){tt("메모를 입력하세요");return;}
+    setFeats(p=>p.map(f=>f.id===sel?{...f,logs:[...(f.logs||[]),{id:uid(),d:new Date().toISOString().slice(0,10),n:ln,m:lm}]}:f));
+    setLn("");setLm("");tt("로그 추가 ✅");
+  };
+  const delLog=lid=>setFeats(p=>p.map(f=>f.id===sel?{...f,logs:(f.logs||[]).filter(l=>l.id!==lid)}:f));
+  const delFeat=()=>{setFeats(p=>p.filter(f=>f.id!==sel));setSheet(null);setSel(null);};
+
+  const onMapC=useCallback(c=>{
+    if(dm==="pin"){
+      const nf={id:uid(),mid:oMap,ty:"pin",tl:"새 장소",em:"📍",hl:false,lng:c.lng,lat:c.lat,tags:[],logs:[]};
+      setFeats(p=>[...p,nf]);setDm(null);openDet(nf);tt("📍 핀 추가됨");
+    }else if(dm==="line"||dm==="area"){
+      setDraft(p=>[...p,[c.lng,c.lat]]);
+    }
+  },[dm,oMap]);
+
+  const finLine=()=>{
+    if(draft.length<2){tt("2점 이상 필요");return;}
+    const nf={id:uid(),mid:oMap,ty:"line",tl:"새 경로",em:"🔀",hl:false,pts:[...draft],tags:[],logs:[]};
+    setFeats(p=>[...p,nf]);setDraft([]);setDm(null);openDet(nf);
+  };
+  const finArea=()=>{
+    if(draft.length<3){tt("3점 이상 필요");return;}
+    const nf={id:uid(),mid:oMap,ty:"area",tl:"새 범위",em:"🔷",hl:false,pts:[...draft],tags:[],logs:[]};
+    setFeats(p=>[...p,nf]);setDraft([]);setDm(null);openDet(nf);
+  };
+  const crMap=()=>{
+    if(!nT.trim()){tt("이름을 입력하세요");return;}
+    const nm={id:uid(),title:nT,desc:nD,theme:nTh,own:true};
+    setMaps(p=>[...p,nm]);setSheet(null);setOMap(nm.id);tt("지도 생성 ✨");
+  };
+  const svRen=()=>{
+    setMaps(p=>p.map(m=>m.id===renId?{...m,title:nT||m.title,desc:nD,theme:nTh}:m));
+    setSheet(null);tt("저장 ✅");
+  };
+  const dlMap=()=>{
+    setFeats(p=>p.filter(f=>f.mid!==renId));
+    setMaps(p=>p.filter(m=>m.id!==renId));
+    setOMap(null);setSheet(null);
+  };
+  const pubMap=mid=>{
+    if(shared.some(s=>s.mapId===mid)){tt("이미 공유중");return;}
+    setShared(p=>[{id:uid(),mapId:mid,date:new Date().toISOString().slice(0,10),likes:0,saves:0,caption:pubCap},...p]);
+    setSheet(null);setPubCap("");tt("프로필에 공유! 🎉");
+  };
+  const unpub=sid=>{setShared(p=>p.filter(s=>s.id!==sid));setProfView(null);tt("공유 해제");};
+  const togFollow=uid2=>setFollowed(p=>p.includes(uid2)?p.filter(x=>x!==uid2):[...p,uid2]);
+
+  const fPeople=PPL.filter(u=>{
+    const q=searchQ.toLowerCase();
+    return(!q||u.name.toLowerCase().includes(q)||u.handle.toLowerCase().includes(q)||u.bio.toLowerCase().includes(q))&&(sFilter==="all"||u.type===sFilter);
+  });
+
+  const drawTools=[{m:"pin",e:"📍",l:"핀"},{m:"line",e:"🔀",l:"경로"},{m:"area",e:"🔷",l:"범위"}];
+  const activeDraw=dm==="line"||dm==="area";
+  const finDraw=dm==="line"?finLine:finArea;
+  const minPts=dm==="line"?2:3;
+
+  return(
+    <div style={{position:"fixed",inset:0,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",background:"#F8F7FF",overflow:"hidden"}}>
+      {toast&&<div style={{position:"fixed",top:14,left:"50%",transform:"translateX(-50%)",zIndex:99999,background:"#1E1B4B",color:"#fff",padding:"8px 18px",borderRadius:12,fontSize:12,fontWeight:700,whiteSpace:"nowrap",pointerEvents:"none"}}>{toast}</div>}
+
+      {/* 헤더 */}
+      <div style={{height:50,display:"flex",alignItems:"center",padding:"0 14px",background:"#fff",borderBottom:"1px solid #E5E7EB",flexShrink:0}}>
+        <span style={{fontSize:20,fontWeight:900,color:"#6366F1"}}>LO</span>
+        <span style={{fontSize:20,fontWeight:900,color:"#F59E0B"}}>CA</span>
+        <div style={{flex:1}}/>
+        <button style={{...BO,padding:"5px 8px",fontSize:10}}>🔔</button>
+      </div>
+
+      {/* 콘텐츠 */}
+      <div style={{flex:1,position:"relative",overflow:"hidden"}}>
+
+        {/* 홈 */}
+        {tab==="home"&&(
+          <div style={{position:"absolute",inset:0,overflowY:"auto"}}>
+            <div style={{padding:"16px 16px 8px",fontSize:17,fontWeight:900}}>당신을 위한 테마지도 🗺️</div>
+            <div style={{padding:"0 16px 10px",fontSize:11,color:"#9CA3AF"}}>관심사에 맞는 큐레이션을 만나보세요</div>
+            <div style={{display:"flex",gap:12,padding:"0 16px",overflowX:"auto"}}>
+              {[
+                {t:"성수동 감성카페 7곳",e:"☕",bg:"linear-gradient(135deg,#fde68a,#f59e0b)",c:"@seongsu_lover",n:7},
+                {t:"BTS 생일카페 투어",e:"💜",bg:"linear-gradient(135deg,#c4b5fd,#7c3aed)",c:"@army_seoul",n:5},
+                {t:"을지로 레트로 산책",e:"🏚️",bg:"linear-gradient(135deg,#99f6e4,#14b8a6)",c:"@oldseoul",n:6}
+              ].map((c,i)=>(
+                <div key={i} style={{minWidth:220,background:"#fff",borderRadius:16,border:"1px solid #E5E7EB",overflow:"hidden",flexShrink:0}}>
+                  <div style={{height:110,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,position:"relative"}}>
+                    {c.e}
+                    <span style={{position:"absolute",bottom:6,left:8,background:"rgba(255,255,255,.9)",borderRadius:20,padding:"2px 7px",fontSize:9,fontWeight:700,color:"#6366F1"}}>📍{c.n}곳</span>
+                  </div>
+                  <div style={{padding:10}}>
+                    <div style={{fontSize:13,fontWeight:800}}>{c.t}</div>
+                    <div style={{fontSize:10,color:"#6B7280",marginTop:2}}>{c.c}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{padding:"16px 16px 8px",fontSize:17,fontWeight:900}}>🔥 인기 지도</div>
+            <div style={{padding:"0 16px 20px",display:"flex",flexDirection:"column",gap:8}}>
+              {[
+                {r:1,t:"혼밥 식당 12곳",e:"🍜",bg:"linear-gradient(135deg,#fca5a5,#ef4444)"},
+                {r:2,t:"인스타 핫플",e:"📸",bg:"linear-gradient(135deg,#93c5fd,#3b82f6)"},
+                {r:3,t:"강아지 동반 카페",e:"🐕",bg:"linear-gradient(135deg,#fdba74,#f97316)"}
+              ].map((x,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:14,border:"1px solid #E5E7EB",padding:12}}>
+                  <span style={{fontSize:18,fontWeight:900,color:"#6366F1",width:22,textAlign:"center"}}>{x.r}</span>
+                  <div style={{width:42,height:42,borderRadius:12,background:x.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{x.e}</div>
+                  <span style={{fontSize:13,fontWeight:800}}>{x.t}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 내 지도 목록 */}
+        {tab==="mm"&&!oMap&&(
+          <div style={{position:"absolute",inset:0,overflowY:"auto",padding:14}}>
+            <div style={{fontSize:18,fontWeight:900,marginBottom:12}}>🗺 내 지도 ({maps.length})</div>
+            <div onClick={()=>{setNT("");setND("");setNTh(TH[0]);setSheet("new");}}
+              style={{background:"#fff",border:"2px dashed #6366F1",borderRadius:16,padding:18,textAlign:"center",cursor:"pointer",fontWeight:800,color:"#6366F1",marginBottom:12}}>
+              ➕ 새 지도 만들기
+            </div>
+            {maps.map(m=>{
+              const fs=feats.filter(f=>f.mid===m.id);
+              const isSh=shared.some(s=>s.mapId===m.id);
+              return(
+                <div key={m.id} onClick={()=>setOMap(m.id)}
+                  style={{background:"#fff",border:"1px solid #E5E7EB",borderRadius:16,overflow:"hidden",marginBottom:10,cursor:"pointer"}}>
+                  <div style={{height:70,background:`linear-gradient(135deg,${m.theme}20,${m.theme}40)`,display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:18,opacity:.7,position:"relative"}}>
+                    {fs.slice(0,5).map((f,i)=><span key={i}>{f.em}</span>)}
+                    {m.own
+                      ?<span style={{position:"absolute",top:8,right:8,fontSize:9,fontWeight:800,color:"#6366F1",background:"rgba(255,255,255,.92)",padding:"3px 8px",borderRadius:10,border:"1px solid #C7D2FE"}}>✏️ 제작자</span>
+                      :<span style={{position:"absolute",top:8,right:8,fontSize:9,fontWeight:800,color:"#1E1B4B",background:"rgba(255,255,255,.92)",padding:"3px 8px",borderRadius:10,border:"1px solid #E5E7EB"}}>{m.from||""}</span>
+                    }
+                  </div>
+                  <div style={{padding:12}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                      <div style={{fontSize:15,fontWeight:900}}>{m.title}</div>
+                      {isSh&&<span style={{fontSize:8,fontWeight:800,color:"#6366F1",background:"#EEF2FF",padding:"2px 6px",borderRadius:10}}>공유중</span>}
+                    </div>
+                    {m.desc&&<div style={{fontSize:11,color:"#6B7280",marginBottom:4}}>{m.desc}</div>}
+                    <div style={{display:"flex",gap:6,marginTop:8}}>
+                      <button onClick={e=>{e.stopPropagation();setOMap(m.id);}} style={{...B,flex:1,padding:8,background:m.theme}}>🗺 열기</button>
+                      <button onClick={e=>{e.stopPropagation();setRenId(m.id);setNT(m.title);setND(m.desc||"");setNTh(m.theme);setSheet("ren");}} style={{...BO,padding:8}}>✏️</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 지도 뷰 */}
+        {tab==="mm"&&oMap&&am&&(
+          <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column"}}>
+            <div style={{height:46,display:"flex",alignItems:"center",padding:"0 10px",gap:8,background:"#fff",borderBottom:"1px solid #E5E7EB",flexShrink:0,zIndex:10}}>
+              <button onClick={()=>{setOMap(null);setDm(null);setDraft([]);}} style={{border:"none",background:"none",cursor:"pointer",fontSize:14,color:"#6B7280",fontWeight:700}}>← 뒤로</button>
+              <div style={{width:10,height:10,borderRadius:5,background:am.theme,flexShrink:0}}/>
+              <div style={{flex:1,fontSize:14,fontWeight:900,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{am.title}</div>
+              <button onClick={()=>{setRenId(oMap);setNT(am.title);setND(am.desc||"");setNTh(am.theme);setSheet("ren");}} style={{...BO,padding:"4px 10px",fontSize:10}}>✏️</button>
+            </div>
+            <div style={{flex:1,position:"relative",overflow:"hidden"}}>
+              <MapView feats={mf} theme={am.theme} drawMode={dm} onMapClick={onMapC} onPinClick={openDet} draft={draft} onToast={tt}/>
+              {dm&&(
+                <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",background:am.theme,color:"#fff",padding:"7px 16px",borderRadius:99,fontSize:11,fontWeight:800,zIndex:500,pointerEvents:"none",boxShadow:"0 2px 8px rgba(0,0,0,.2)"}}>
+                  {dm==="pin"?"📍 지도를 탭해 핀 추가":dm==="line"?`🔀 경로 점 추가 (${draft.length}개)`:`🔷 범위 꼭짓점 추가 (${draft.length}개)`}
+                </div>
+              )}
+              {activeDraw&&draft.length>0&&(
+                <div style={{position:"absolute",bottom:80,left:10,right:10,display:"flex",gap:6,zIndex:500}}>
+                  <button onClick={()=>setDraft(p=>p.slice(0,-1))} style={{...BO,flex:1,fontSize:11}}>↩ 되돌리기 ({draft.length})</button>
+                  <button onClick={finDraw} disabled={draft.length<minPts} style={{...B,flex:1,fontSize:11,background:draft.length>=minPts?"#22C55E":"#9CA3AF"}}>✅ 완료</button>
+                  <button onClick={()=>{setDm(null);setDraft([]);}} style={{...BD,padding:"0 12px",fontSize:11}}>✕</button>
+                </div>
+              )}
+              <div style={{position:"absolute",left:10,bottom:10,background:"rgba(255,255,255,.92)",border:"1px solid #E5E7EB",borderRadius:12,padding:"6px 10px",zIndex:400}}>
+                <div style={{fontSize:10,fontWeight:900}}>{am.title}</div>
+                <div style={{fontSize:9,color:"#9CA3AF"}}>📍{mf.filter(f=>f.ty==="pin").length} · 🔀{mf.filter(f=>f.ty==="line").length} · 🔷{mf.filter(f=>f.ty==="area").length}</div>
+              </div>
+              <div style={{position:"absolute",right:10,bottom:10,display:"flex",flexDirection:"column",gap:6,zIndex:400}}>
+                {drawTools.map(x=>(
+                  <button key={x.m} onClick={()=>{setDm(dm===x.m?null:x.m);setDraft([]);}}
+                    style={{width:48,borderRadius:12,border:`2px solid ${dm===x.m?am.theme:"#E5E7EB"}`,background:dm===x.m?"#EEF2FF":"rgba(255,255,255,.96)",cursor:"pointer",fontSize:18,display:"flex",flexDirection:"column",alignItems:"center",padding:"7px 4px",gap:1,boxShadow:"0 2px 6px rgba(0,0,0,.1)"}}>
+                    {x.e}<span style={{fontSize:8,fontWeight:800,color:dm===x.m?am.theme:"#6B7280"}}>{x.l}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 목록 */}
+        {tab==="list"&&(
+          <div style={{position:"absolute",inset:0,overflowY:"auto",padding:14}}>
+            <div style={{fontSize:17,fontWeight:900,marginBottom:8}}>📋 피처 목록</div>
+            <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:4}}>
+              <button onClick={()=>setListMap("all")} style={{border:`1px solid ${listMap==="all"?"#6366F1":"#E5E7EB"}`,background:listMap==="all"?"#EEF2FF":"#fff",color:listMap==="all"?"#6366F1":"#6B7280",borderRadius:20,padding:"6px 12px",fontSize:11,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}>🗺 전체</button>
+              {maps.map(m=>(
+                <button key={m.id} onClick={()=>setListMap(m.id)} style={{border:`1px solid ${listMap===m.id?"#6366F1":"#E5E7EB"}`,background:listMap===m.id?"#EEF2FF":"#fff",color:listMap===m.id?"#6366F1":"#6B7280",borderRadius:20,padding:"6px 12px",fontSize:11,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{m.title}</button>
+              ))}
+            </div>
+            <input value={sq} onChange={e=>setSq(e.target.value)} placeholder="검색…" style={{...INP,marginBottom:10}}/>
+            {(()=>{
+              const filtered=feats.filter(f=>{
+                const mapOk=listMap==="all"||f.mid===listMap;
+                const qOk=!sq||f.tl.toLowerCase().includes(sq.toLowerCase())||(f.tags||[]).some(t=>t.toLowerCase().includes(sq.toLowerCase()));
+                return mapOk&&qOk;
+              });
+              if(!filtered.length) return <div style={{textAlign:"center",padding:"40px 0",color:"#9CA3AF"}}><div style={{fontSize:32,marginBottom:8}}>{sq?"🔍":"📭"}</div><div style={{fontSize:13,fontWeight:800}}>{sq?"검색 결과 없음":"피처 없음"}</div></div>;
+              return filtered.map(f=>{
+                const mp=maps.find(m=>m.id===f.mid);
+                return(
+                  <div key={f.id} onClick={()=>{setTab("mm");setOMap(f.mid);setTimeout(()=>openDet(f),200);}}
+                    style={{background:"#fff",border:"1px solid #E5E7EB",borderRadius:14,padding:"10px 12px",display:"flex",gap:10,alignItems:"center",marginBottom:7,cursor:"pointer"}}>
+                    <div style={{width:38,height:38,borderRadius:12,background:"#EEF2FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{f.em}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:800,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{(f.hl?"⭐ ":"")+f.tl}</div>
+                      <div style={{fontSize:10,color:"#9CA3AF",marginTop:1,display:"flex",gap:4}}>
+                        <span>{mp?.title}</span><span>·</span>
+                        <span>{f.ty==="pin"?"📍핀":f.ty==="line"?"🔀경로":"🔷범위"}</span>
+                      </div>
+                    </div>
+                    <span style={{fontSize:10,color:"#9CA3AF",fontWeight:800}}>📝{f.logs?.length||0}</span>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        )}
+
+        {/* 탐색 */}
+        {tab==="search"&&!viewUser&&(
+          <div style={{position:"absolute",inset:0,overflowY:"auto"}}>
+            <div style={{padding:"14px 14px 0",background:"#fff",borderBottom:"1px solid #E5E7EB"}}>
+              <div style={{fontSize:17,fontWeight:900,marginBottom:10}}>🔍 탐색</div>
+              <div style={{display:"flex",gap:8,alignItems:"center",background:"#F3F4F6",borderRadius:14,padding:"9px 12px",marginBottom:10}}>
+                <span style={{fontSize:14,opacity:.5}}>🔍</span>
+                <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="크리에이터, 친구, 기관 검색…" style={{flex:1,border:"none",background:"transparent",outline:"none",fontSize:13,fontWeight:700,color:"#1E1B4B"}}/>
+                {searchQ&&<button onClick={()=>setSearchQ("")} style={{border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#9CA3AF",fontWeight:800}}>✕</button>}
+              </div>
+              <div style={{display:"flex",gap:6,paddingBottom:12,overflowX:"auto"}}>
+                {[{k:"all",l:"전체",e:"✨"},{k:"creator",l:"크리에이터",e:"🧑‍🎨"},{k:"friend",l:"친구",e:"👥"},{k:"org",l:"기관·단체",e:"🏛️"}].map(f=>(
+                  <button key={f.k} onClick={()=>setSFilter(f.k)} style={{border:`1px solid ${sFilter===f.k?"#6366F1":"#E5E7EB"}`,background:sFilter===f.k?"#EEF2FF":"#fff",color:sFilter===f.k?"#6366F1":"#6B7280",borderRadius:20,padding:"6px 12px",fontSize:11,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}>{f.e} {f.l}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{padding:14}}>
+              {!searchQ&&(
+                <>
+                  <div style={{fontSize:14,fontWeight:900,marginBottom:10}}>🌟 추천 크리에이터</div>
+                  <div style={{display:"flex",gap:12,overflowX:"auto",marginBottom:20,paddingBottom:4}}>
+                    {PPL.filter(u=>u.type==="creator"&&u.verified).slice(0,5).map(u=>(
+                      <div key={u.id} onClick={()=>setViewUser(u)} style={{minWidth:100,textAlign:"center",cursor:"pointer",flexShrink:0}}>
+                        <div style={{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,#6366F1,#EC4899)",padding:2,margin:"0 auto 6px"}}>
+                          <div style={{width:"100%",height:"100%",borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{u.emoji}</div>
+                        </div>
+                        <div style={{fontSize:11,fontWeight:800}}>{u.name}</div>
+                        <div style={{fontSize:9,color:"#9CA3AF"}}>{u.handle}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{fontSize:14,fontWeight:900,marginBottom:10}}>🏛️ 기관 · 단체</div>
+                  {PPL.filter(u=>u.type==="org").map(u=>(
+                    <div key={u.id} onClick={()=>setViewUser(u)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",border:"1px solid #E5E7EB",borderRadius:16,padding:12,marginBottom:8,cursor:"pointer"}}>
+                      <div style={{width:48,height:48,borderRadius:"50%",background:"#F3F4F6",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{u.emoji}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:13,fontWeight:800}}>{u.name}</span>{u.verified&&<span style={{fontSize:10,color:"#3B82F6"}}>✓</span>}</div>
+                        <div style={{fontSize:10,color:"#9CA3AF",marginTop:1}}>{u.bio}</div>
+                        <div style={{fontSize:9,color:"#9CA3AF",marginTop:2}}>🗺 {u.maps} · 👥 {u.followers}</div>
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();togFollow(u.id);}} style={{...(followed.includes(u.id)?BO:B),padding:"6px 12px",fontSize:10}}>{followed.includes(u.id)?"팔로잉":"팔로우"}</button>
+                    </div>
+                  ))}
+                </>
+              )}
+              {searchQ&&(
+                <>
+                  <div style={{fontSize:11,color:"#9CA3AF",fontWeight:700,marginBottom:10}}>"{searchQ}" 결과 ({fPeople.length})</div>
+                  {!fPeople.length&&<div style={{textAlign:"center",padding:"40px 0",color:"#9CA3AF"}}><div style={{fontSize:36,marginBottom:8}}>🔍</div><div style={{fontSize:13,fontWeight:800}}>결과가 없어요</div></div>}
+                  {fPeople.map(u=>(
+                    <div key={u.id} onClick={()=>setViewUser(u)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",border:"1px solid #E5E7EB",borderRadius:16,padding:12,marginBottom:8,cursor:"pointer"}}>
+                      <div style={{width:48,height:48,borderRadius:"50%",background:u.type==="org"?"#F3F4F6":"linear-gradient(135deg,#6366F1,#EC4899)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+                        {u.type==="org"?u.emoji:<div style={{width:"100%",height:"100%",borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>{u.emoji}</div>}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                          <span style={{fontSize:13,fontWeight:800}}>{u.name}</span>
+                          {u.verified&&<span style={{fontSize:10,color:"#3B82F6"}}>✓</span>}
+                          <span style={{fontSize:8,fontWeight:700,color:u.type==="creator"?"#7C3AED":u.type==="org"?"#059669":"#9CA3AF",background:u.type==="creator"?"#F3E8FF":u.type==="org"?"#ECFDF5":"#F3F4F6",padding:"1px 6px",borderRadius:8}}>{u.type==="creator"?"크리에이터":u.type==="org"?"기관":"친구"}</span>
+                        </div>
+                        <div style={{fontSize:10,color:"#9CA3AF",marginTop:1,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{u.bio}</div>
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();togFollow(u.id);}} style={{...(followed.includes(u.id)?BO:B),padding:"6px 12px",fontSize:10}}>{followed.includes(u.id)?"팔로잉":"팔로우"}</button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab==="search"&&viewUser&&(
+          <div style={{position:"absolute",inset:0,overflowY:"auto",background:"#fff"}}>
+            <div style={{height:46,display:"flex",alignItems:"center",padding:"0 12px",gap:8,borderBottom:"1px solid #E5E7EB"}}>
+              <button onClick={()=>setViewUser(null)} style={{border:"none",background:"none",cursor:"pointer",fontSize:14,color:"#6B7280",fontWeight:700}}>←</button>
+              <div style={{flex:1,fontSize:14,fontWeight:900}}>{viewUser.handle}</div>
+            </div>
+            <div style={{padding:"20px 16px 0"}}>
+              <div style={{display:"flex",alignItems:"center",gap:16}}>
+                <div style={{width:76,height:76,borderRadius:"50%",background:"linear-gradient(135deg,#6366F1,#EC4899)",padding:3,flexShrink:0}}>
+                  <div style={{width:"100%",height:"100%",borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>{viewUser.emoji}</div>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-around",textAlign:"center"}}>
+                    {[{n:viewUser.maps,l:"지도"},{n:viewUser.followers.toLocaleString(),l:"팔로워"},{n:viewUser.following,l:"팔로잉"}].map((s,i)=>(
+                      <div key={i}><div style={{fontSize:18,fontWeight:900}}>{s.n}</div><div style={{fontSize:10,color:"#9CA3AF"}}>{s.l}</div></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div style={{marginTop:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:15,fontWeight:900}}>{viewUser.name}</span>{viewUser.verified&&<span style={{fontSize:12,color:"#3B82F6"}}>✓</span>}</div>
+                <div style={{fontSize:12,color:"#6B7280",marginTop:4}}>{viewUser.bio}</div>
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:12}}>
+                <button onClick={()=>togFollow(viewUser.id)} style={{...(followed.includes(viewUser.id)?BO:B),flex:1,padding:10,fontSize:12}}>{followed.includes(viewUser.id)?"팔로잉":"팔로우"}</button>
+                <button style={{...BO,flex:1,padding:10,fontSize:12}}>메시지</button>
+              </div>
+              <div style={{display:"flex",borderTop:"1px solid #E5E7EB",marginTop:14}}>
+                <div style={{flex:1,textAlign:"center",padding:"10px 0",borderBottom:"2px solid #1E1B4B",fontSize:14}}>🗺</div>
+                <div style={{flex:1,textAlign:"center",padding:"10px 0",color:"#D1D5DB",fontSize:14}}>🔖</div>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>
+              {Array.from({length:viewUser.maps},(_,i)=>{
+                const g=GR[i%GR.length];
+                const emos=["☕","🍽️","🌳","📸","🏖️","🌙","🍺","🎨","🐾","🛍️"];
+                return(
+                  <div key={i} style={{aspectRatio:"1",background:`linear-gradient(135deg,${g[0]},${g[1]})`,position:"relative",overflow:"hidden",cursor:"pointer"}}>
+                    <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                      {[0,1,2].map(j=><span key={j} style={{fontSize:22,transform:`rotate(${(j-1)*10}deg)`}}>{emos[(i*3+j)%emos.length]}</span>)}
+                    </div>
+                    <div style={{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,.3)",padding:"4px 6px"}}>
+                      <div style={{fontSize:9,fontWeight:800,color:"#fff"}}>지도 {i+1}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 프로필 */}
+        {tab==="prof"&&!profView&&(
+          <div style={{position:"absolute",inset:0,overflowY:"auto",background:"#fff"}}>
+            <div style={{padding:"20px 16px 0"}}>
+              <div style={{display:"flex",alignItems:"center",gap:16}}>
+                <div style={{width:76,height:76,borderRadius:"50%",background:"linear-gradient(135deg,#6366F1,#EC4899)",padding:3,flexShrink:0}}>
+                  <div style={{width:"100%",height:"100%",borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>😊</div>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-around",textAlign:"center"}}>
+                    {[{n:shared.length,l:"지도"},{n:128,l:"팔로워"},{n:45,l:"팔로잉"}].map((s,i)=>(
+                      <div key={i}><div style={{fontSize:18,fontWeight:900}}>{s.n}</div><div style={{fontSize:10,color:"#9CA3AF"}}>{s.l}</div></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div style={{marginTop:12}}>
+                <div style={{fontSize:15,fontWeight:900}}>경주</div>
+                <div style={{fontSize:12,color:"#9CA3AF"}}>@gyeongju_loca</div>
+                <div style={{fontSize:12,color:"#6B7280",marginTop:4,lineHeight:"1.6"}}>🗺 지도로 기록하는 나만의 장소들 · 📍 커뮤니티 · 소셜벤처 · 여행</div>
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:12}}>
+                <button style={{...BO,flex:1,padding:8,fontSize:11}}>프로필 편집</button>
+                <button onClick={()=>{setPubCap("");setSheet("publish");}} style={{...B,flex:1,padding:8,fontSize:11}}>+ 지도 올리기</button>
+              </div>
+              <div style={{display:"flex",borderTop:"1px solid #E5E7EB",marginTop:14}}>
+                <div style={{flex:1,textAlign:"center",padding:"10px 0",borderBottom:"2px solid #1E1B4B",fontSize:14}}>🗺</div>
+                <div style={{flex:1,textAlign:"center",padding:"10px 0",color:"#D1D5DB",fontSize:14}}>🔖</div>
+              </div>
+            </div>
+            {shared.length===0
+              ?<div style={{textAlign:"center",padding:"50px 20px",color:"#9CA3AF"}}>
+                  <div style={{fontSize:44,marginBottom:10}}>📸</div>
+                  <div style={{fontSize:15,fontWeight:800,color:"#1E1B4B"}}>지도를 공유해보세요</div>
+                  <button onClick={()=>{setPubCap("");setSheet("publish");}} style={{...B,marginTop:16,padding:"10px 24px"}}>첫 지도 올리기</button>
+                </div>
+              :<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>
+                  {shared.map((s,idx)=>{
+                    const mp=maps.find(m=>m.id===s.mapId);
+                    const fs=feats.filter(f=>f.mid===s.mapId);
+                    if(!mp) return null;
+                    return(
+                      <div key={s.id} onClick={()=>setProfView(s)} style={{aspectRatio:"1",cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                        <MapThumb map={mp} feats={fs} size="100%" idx={idx}/>
+                      </div>
+                    );
+                  })}
+                </div>
+            }
+          </div>
+        )}
+
+        {tab==="prof"&&profView&&(()=>{
+          const mp=maps.find(m=>m.id===profView.mapId);
+          const fs=feats.filter(f=>f.mid===profView.mapId);
+          if(!mp) return null;
+          const idx=shared.findIndex(s=>s.id===profView.id);
+          const g=GR[(idx>=0?idx:0)%GR.length];
+          return(
+            <div style={{position:"absolute",inset:0,overflowY:"auto",background:"#fff"}}>
+              <div style={{height:46,display:"flex",alignItems:"center",padding:"0 12px",borderBottom:"1px solid #E5E7EB"}}>
+                <button onClick={()=>setProfView(null)} style={{border:"none",background:"none",cursor:"pointer",fontSize:14,color:"#6B7280",fontWeight:700}}>←</button>
+                <div style={{flex:1,fontSize:14,fontWeight:900,textAlign:"center"}}>게시물</div>
+                <div style={{width:30}}/>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px"}}>
+                <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#6366F1,#EC4899)",padding:2}}>
+                  <div style={{width:"100%",height:"100%",borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>😊</div>
+                </div>
+                <div><div style={{fontSize:13,fontWeight:800}}>경주</div><div style={{fontSize:10,color:"#9CA3AF"}}>{profView.date}</div></div>
+              </div>
+              <div style={{width:"100%",aspectRatio:"4/5",background:`linear-gradient(135deg,${g[0]},${g[1]})`,position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",top:-40,right:-40,width:160,height:160,borderRadius:"50%",background:"rgba(255,255,255,.08)"}}/>
+                <div style={{position:"absolute",top:20,left:0,right:0,textAlign:"center",fontSize:10,fontWeight:800,color:"rgba(255,255,255,.6)",letterSpacing:2}}>LOCA</div>
+                <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30}}>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",marginBottom:16}}>
+                    {fs.filter(f=>f.ty==="pin").slice(0,6).map((f,i)=>(
+                      <span key={i} style={{fontSize:36,filter:"drop-shadow(0 3px 6px rgba(0,0,0,.2))",transform:`rotate(${(i-2.5)*6}deg)`}}>{f.em}</span>
+                    ))}
+                  </div>
+                  <div style={{fontSize:22,fontWeight:900,color:"#fff",textShadow:"0 2px 8px rgba(0,0,0,.2)"}}>{mp.title}</div>
+                  {mp.desc&&<div style={{fontSize:12,color:"rgba(255,255,255,.8)",marginTop:6}}>{mp.desc}</div>}
+                  <div style={{marginTop:12,background:"rgba(255,255,255,.2)",padding:"4px 14px",borderRadius:20,fontSize:11,fontWeight:700,color:"#fff"}}>📍 {fs.filter(f=>f.ty==="pin").length}곳</div>
+                </div>
+              </div>
+              <div style={{padding:"10px 14px",display:"flex",gap:16,fontSize:22}}>
+                <span onClick={()=>{setShared(p=>p.map(s=>s.id===profView.id?{...s,likes:s.likes+1}:s));setProfView(v=>({...v,likes:v.likes+1}));}} style={{cursor:"pointer"}}>❤️</span>
+                <span>💬</span><span>📤</span>
+                <span style={{marginLeft:"auto"}}>🔖</span>
+              </div>
+              <div style={{padding:"0 14px",fontSize:13,fontWeight:800}}>좋아요 {profView.likes}개</div>
+              <div style={{padding:"6px 14px",fontSize:13}}><span style={{fontWeight:800}}>경주</span> <span style={{color:"#6B7280"}}>{profView.caption||mp.desc}</span></div>
+              <div style={{padding:"8px 14px"}}>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {fs.filter(f=>f.ty==="pin").map(f=>(
+                    <span key={f.id} style={{display:"inline-flex",alignItems:"center",gap:3,padding:"4px 10px",background:"#F8F7FF",border:"1px solid #E5E7EB",borderRadius:20,fontSize:11,fontWeight:700}}>{f.em} {f.tl}</span>
+                  ))}
+                </div>
+              </div>
+              <div style={{padding:"12px 14px 20px"}}>
+                <button onClick={()=>unpub(profView.id)} style={{...BD,width:"100%",fontSize:11}}>🗑 공유 해제</button>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 탭 바 */}
+      <div style={{height:56,background:"rgba(255,255,255,.95)",borderTop:"1px solid #E5E7EB",display:"flex",justifyContent:"space-around",alignItems:"flex-start",paddingTop:6,flexShrink:0}}>
+        {[{k:"home",e:"🏠",l:"홈"},{k:"mm",e:"🗺",l:"내 지도"},{k:"list",e:"📋",l:"목록"},{k:"search",e:"🔍",l:"탐색"},{k:"prof",e:"👤",l:"프로필"}].map(x=>(
+          <button key={x.k} onClick={()=>{setTab(x.k);if(x.k!=="mm"){setOMap(null);setDm(null);setDraft([]);}if(x.k==="prof")setProfView(null);if(x.k==="search")setViewUser(null);}}
+            style={{background:"none",border:"none",cursor:"pointer",padding:"4px 6px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+            <div style={{fontSize:18,opacity:tab===x.k?1:.4}}>{x.e}</div>
+            <div style={{fontSize:9,fontWeight:tab===x.k?800:600,color:tab===x.k?"#6366F1":"#9CA3AF"}}>{x.l}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* 딤 */}
+      {sheet&&<div onClick={()=>setSheet(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.3)",zIndex:9998}}/>}
+
+      {/* 지도 올리기 */}
+      {sheet==="publish"&&(
+        <div onClick={e=>e.stopPropagation()} style={SHT}>
+          <div style={{fontSize:15,fontWeight:900,marginBottom:4}}>📤 지도 올리기</div>
+          <div style={{fontSize:11,color:"#9CA3AF",marginBottom:10}}>내 지도를 선택해서 프로필에 공유</div>
+          <input value={pubCap} onChange={e=>setPubCap(e.target.value)} placeholder="한마디 (선택)" style={{...INP,marginBottom:12}}/>
+          {maps.map((m,idx)=>{
+            const fs=feats.filter(f=>f.mid===m.id);
+            const al=shared.some(s=>s.mapId===m.id);
+            return(
+              <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,padding:10,background:al?"#F9FAFB":"#fff",border:"1px solid #E5E7EB",borderRadius:14,marginBottom:8,opacity:al?.6:1}}>
+                <div style={{width:52,height:52,borderRadius:12,overflow:"hidden",flexShrink:0}}><MapThumb map={m} feats={fs} size={52} idx={idx}/></div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:800}}>{m.title}</div>
+                  <div style={{fontSize:10,color:"#9CA3AF",marginTop:1}}>📍{fs.filter(f=>f.ty==="pin").length}곳{al?" · 공유중":""}</div>
+                </div>
+                {al?<span style={{fontSize:9,fontWeight:800,color:"#6366F1",background:"#EEF2FF",padding:"4px 8px",borderRadius:10}}>공유중</span>
+                  :<button onClick={()=>pubMap(m.id)} style={{...B,padding:"8px 14px",fontSize:11}}>올리기</button>}
+              </div>
+            );
+          })}
+          <button onClick={()=>setSheet(null)} style={{...BO,width:"100%",marginTop:8}}>닫기</button>
+        </div>
+      )}
+
+      {/* 피처 상세 */}
+      {sheet==="det"&&sf&&(
+        <div onClick={e=>e.stopPropagation()} style={SHT}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+            <div style={{width:42,height:42,borderRadius:14,background:"#EEF2FF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{sf.em}</div>
+            <div style={{flex:1,fontSize:15,fontWeight:900}}>{(sf.hl?"⭐ ":"")+sf.tl}</div>
+            <button onClick={()=>setSheet(null)} style={{...BO,padding:"5px 8px"}}>✕</button>
+          </div>
+          <div style={{fontSize:10,color:"#9CA3AF",fontWeight:800,marginBottom:4}}>제목</div>
+          <input value={fT} onChange={e=>setFT(e.target.value)} style={INP}/>
+          <div style={{fontSize:10,color:"#9CA3AF",fontWeight:800,marginBottom:4,marginTop:8}}>태그 (쉼표 구분)</div>
+          <input value={fTg} onChange={e=>setFTg(e.target.value)} placeholder="예: 카페, 산책" style={INP}/>
+          <label style={{display:"flex",alignItems:"center",gap:6,marginTop:8,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            <input type="checkbox" checked={fH} onChange={e=>setFH(e.target.checked)}/> ⭐ 하이라이트
+          </label>
+          <button onClick={saveDet} style={{...B,width:"100%",marginTop:10}}>💾 저장</button>
+          <div style={{fontSize:14,fontWeight:900,margin:"12px 0 8px"}}>📝 로그 ({sf.logs?.length||0})</div>
+          <div style={{display:"flex",gap:4,marginBottom:6}}>
+            {MO.map(m=>(
+              <button key={m} onClick={()=>setLm(lm===m?"":m)} style={{width:30,height:30,borderRadius:15,border:lm===m?"2px solid #6366F1":"1px solid #E5E7EB",background:lm===m?"#EEF2FF":"#fff",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>{m}</button>
+            ))}
+          </div>
+          <textarea value={ln} onChange={e=>setLn(e.target.value)} placeholder="오늘의 기록…" rows={2} style={{...INP,resize:"none"}}/>
+          <button onClick={addLog} style={{...B,width:"100%",marginTop:6,background:"#22C55E"}}>+ 로그 추가</button>
+          {(sf.logs||[]).slice().reverse().map(l=>(
+            <div key={l.id} style={{background:"#FAFAFA",border:"1px solid #E5E7EB",borderRadius:12,padding:"8px 10px",marginTop:6}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                <span style={{fontSize:9,color:"#9CA3AF",fontWeight:800}}>{l.d}</span><span>{l.m}</span>
+              </div>
+              <div style={{fontSize:12,fontWeight:700}}>{l.n}</div>
+              <div style={{textAlign:"right",marginTop:3}}><button onClick={()=>delLog(l.id)} style={{...BD,padding:"2px 8px",fontSize:9}}>삭제</button></div>
+            </div>
+          ))}
+          <button onClick={delFeat} style={{...BD,width:"100%",marginTop:12}}>🗑 삭제</button>
+        </div>
+      )}
+
+      {/* 새 지도 */}
+      {sheet==="new"&&(
+        <div onClick={e=>e.stopPropagation()} style={SHT}>
+          <div style={{fontSize:15,fontWeight:900,marginBottom:10}}>📌 새 지도 만들기</div>
+          <input value={nT} onChange={e=>setNT(e.target.value)} placeholder="지도 이름" style={{...INP,marginBottom:8}}/>
+          <input value={nD} onChange={e=>setND(e.target.value)} placeholder="설명 (선택)" style={{...INP,marginBottom:10}}/>
+          <div style={{fontSize:10,color:"#9CA3AF",fontWeight:800,marginBottom:6}}>테마 색상</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {TH.map(c=><div key={c} onClick={()=>setNTh(c)} style={{width:32,height:32,borderRadius:16,background:c,cursor:"pointer",border:`3px solid ${c===nTh?"#1E1B4B":"transparent"}`}}/>)}
+          </div>
+          <button onClick={crMap} style={{...B,width:"100%"}}>✨ 만들기</button>
+        </div>
+      )}
+
+      {/* 지도 수정 */}
+      {sheet==="ren"&&(
+        <div onClick={e=>e.stopPropagation()} style={SHT}>
+          <div style={{fontSize:15,fontWeight:900,marginBottom:10}}>✏️ 지도 수정</div>
+          <input value={nT} onChange={e=>setNT(e.target.value)} placeholder="지도 이름" style={{...INP,marginBottom:8}}/>
+          <input value={nD} onChange={e=>setND(e.target.value)} placeholder="설명" style={{...INP,marginBottom:10}}/>
+          <div style={{fontSize:10,color:"#9CA3AF",fontWeight:800,marginBottom:6}}>테마 색상</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {TH.map(c=><div key={c} onClick={()=>setNTh(c)} style={{width:32,height:32,borderRadius:16,background:c,cursor:"pointer",border:`3px solid ${c===nTh?"#1E1B4B":"transparent"}`}}/>)}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setSheet(null)} style={{...BO,flex:1}}>취소</button>
+            <button onClick={svRen} style={{...B,flex:1}}>저장</button>
+          </div>
+          <button onClick={dlMap} style={{...BD,width:"100%",marginTop:8}}>🗑 지도 삭제</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
